@@ -5,30 +5,29 @@ import time
 import random
 import urllib.parse
 import subprocess
-from Filehandler import *
+from Core.Filehandler import *
 
 
 
 
 class RobloxJoiner:
     def __init__(self,Name:str):
-        self.Name==
+        self.Name = Name
     def findcookieforacc(self,Name:str):
-        Loader=accountloader()
+        Loader=accountloader("")
         data=Loader.LoadSaved()
         for i in data :
-            if data["AccountData"]["name"]==Name:
-                return data["AccountData"]["Cookies"]
-            else:
-                return None
-            
+            if i["name"]==Name:
+                return i["Cookies"]
+        return None
+
     def joinbyname(self,Name : str,Place : int,Job:str):
         COOKIE = self.findcookieforacc(Name)
         PLACE_ID = Place
         JOB_ID = Job
-        if (COOKIE or PLACE_ID)==None:
+        if COOKIE is None or not PLACE_ID:
             print("Cookie or place ID expect nil")
-            return 
+            return
         
         session = requests.Session()
         session.cookies.set(".ROBLOSECURITY", COOKIE, domain=".roblox.com", path="/")
@@ -40,7 +39,7 @@ class RobloxJoiner:
         csrf = r.headers.get("x-csrf-token")
         if not csrf:
             print("[FAIL] ขอ CSRF Token ไม่ได้")
-            exit()
+            return
 
         print(f"[OK] CSRF Token: {csrf[:20]}...")
 
@@ -56,7 +55,7 @@ class RobloxJoiner:
         ticket = r.headers.get("rbx-authentication-ticket")
         if not ticket:
             print(f"[FAIL] ขอ Auth Ticket ไม่ได้ (status {r.status_code})")
-            exit()
+            return
 
         print(f"[OK] Auth Ticket: {ticket[:40]}...")
 
