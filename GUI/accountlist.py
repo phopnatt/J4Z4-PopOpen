@@ -11,7 +11,9 @@ def load():
 
 
 class scrollingframe:
-    def __init__(self, parent):
+    def __init__(self, parent, only_logged=False):
+        # only_logged=True -> แสดงเฉพาะ account ที่ Logged==True (ใช้ในหน้า Account Control)
+        self.only_logged = only_logged
         self.scroll_frame = ctk.CTkScrollableFrame(parent, width=350, height=250)
         self.scroll_frame.pack(padx=20, pady=20, fill="both", expand=True)
         self.selected = {"item": None, "account": None}
@@ -42,8 +44,10 @@ class scrollingframe:
         self.selected["account"] = None
 
         accounts = load()
+        if self.only_logged:
+            accounts = [acc for acc in accounts if acc.get("Logged")]
         if not accounts:
-            lbl = ctk.CTkLabel(self.scroll_frame, text="ยังไม่มี account — กด Add account", anchor="w")
+            lbl = ctk.CTkLabel(self.scroll_frame, text="Please add account first!!!", anchor="w")
             lbl.pack(fill="x", pady=2, padx=4)
             self.account_rows.append(lbl)
             return

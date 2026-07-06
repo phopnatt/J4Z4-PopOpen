@@ -39,9 +39,12 @@ class accountloader :
         try:
             with open("Data/account.json","r",encoding="utf-8") as f:
                 data = json.load(f)
-                return data["AccountData"]
+                accounts = data["AccountData"]
         except (FileNotFoundError, json.JSONDecodeError, KeyError):
             return []
+        for acc in accounts:          ## เติม default ให้ record เก่าที่ยังไม่มีฟิลด์ Logged
+            acc.setdefault("Logged", False)
+        return accounts
 
     def Addaccount(self): ## เพิ่ม account จาก self.token Return True ถ้าสำเร็จ ไม่ผ่านคืน False
         name = Robloxtools(self.token).Checkauthentoken()
@@ -51,12 +54,33 @@ class accountloader :
         for acc in accounts :
             if acc["name"] == name :
                 acc["Cookies"] = self.token  ## มีอยู่แล้วอัปเดต cookie
+                acc.setdefault("Logged", False)  ## กัน record เก่าที่ยังไม่มีฟิลด์นี้
                 break
         else :
-            accounts.append({"name": name, "Cookies": self.token})
+            accounts.append({"name": name, "Cookies": self.token,"Logged":False})
         with open("Data/account.json","w",encoding="utf-8") as f:
             json.dump({"AccountData": accounts}, f, ensure_ascii=False, indent=2)
         return True
+
+    def SetLogged(self, name: str, state: bool): ## อัปเดตสถานะ Logged ของ account คืน True ถ้าเจอ
+        accounts = self.LoadSaved()
+        for acc in accounts :
+            if acc["name"] == name :
+                acc["Logged"] = bool(state)
+                with open("Data/account.json","w",encoding="utf-8") as f:
+                    json.dump({"AccountData": accounts}, f, ensure_ascii=False, indent=2)
+                return True
+        return False
+
+    def SetLastPlace(self, name: str, place): ## จำ place ล่าสุดที่กด Launch ไว้ให้ auto relaunch ใช้ คืน True ถ้าเจอ
+        accounts = self.LoadSaved()
+        for acc in accounts :
+            if acc["name"] == name :
+                acc["LastPlace"] = str(place)
+                with open("Data/account.json","w",encoding="utf-8") as f:
+                    json.dump({"AccountData": accounts}, f, ensure_ascii=False, indent=2)
+                return True
+        return False
 
     def Remove(self, name: str): ## ลบ account ตามชื่อ Return True ถ้าลบเจอ
         accounts = self.LoadSaved()

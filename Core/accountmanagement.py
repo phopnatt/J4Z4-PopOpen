@@ -31,11 +31,16 @@ class RobloxJoiner:
         
         session = requests.Session()
         session.cookies.set(".ROBLOSECURITY", COOKIE, domain=".roblox.com", path="/")
-        r = session.post(
-            "https://auth.roblox.com/v1/authentication-ticket/",
-            headers={"Referer": "https://www.roblox.com/", "Content-Type": "application/json"},
-            json={},
-        )
+        try:
+            r = session.post(
+                "https://auth.roblox.com/v1/authentication-ticket/",
+                headers={"Referer": "https://www.roblox.com/", "Content-Type": "application/json"},
+                json={},
+                timeout=15,   # กัน request ค้างเงียบจน relaunch ไม่เกิดอะไรขึ้น
+            )
+        except requests.RequestException as e:
+            print(f"[FAIL] ขอ CSRF Token ไม่ได้ (เน็ตมีปัญหา): {e}")
+            return
         csrf = r.headers.get("x-csrf-token")
         if not csrf:
             print("[FAIL] ขอ CSRF Token ไม่ได้")
@@ -43,15 +48,20 @@ class RobloxJoiner:
 
         print(f"[OK] CSRF Token: {csrf[:20]}...")
 
-        r = session.post(
-            "https://auth.roblox.com/v1/authentication-ticket/",
-            headers={
-                "X-CSRF-TOKEN": csrf,
-                "Referer": "https://www.roblox.com/",
-                "Content-Type": "application/json",
-            },
-            json={},
-        )
+        try:
+            r = session.post(
+                "https://auth.roblox.com/v1/authentication-ticket/",
+                headers={
+                    "X-CSRF-TOKEN": csrf,
+                    "Referer": "https://www.roblox.com/",
+                    "Content-Type": "application/json",
+                },
+                json={},
+                timeout=15,
+            )
+        except requests.RequestException as e:
+            print(f"[FAIL] ขอ Auth Ticket ไม่ได้ (เน็ตมีปัญหา): {e}")
+            return
         ticket = r.headers.get("rbx-authentication-ticket")
         if not ticket:
             print(f"[FAIL] ขอ Auth Ticket ไม่ได้ (status {r.status_code})")
@@ -60,11 +70,15 @@ class RobloxJoiner:
         print(f"[OK] Auth Ticket: {ticket[:40]}...")
 
         if not JOB_ID:
-            r = session.get(
-                f"https://games.roblox.com/v1/games/{PLACE_ID}/servers/public",
-                params={"sortOrder": "Asc", "limit": 100},
-            )
-            if r.status_code == 200:
+            try:
+                r = session.get(
+                    f"https://games.roblox.com/v1/games/{PLACE_ID}/servers/public",
+                    params={"sortOrder": "Asc", "limit": 100},
+                    timeout=15,
+                )
+            except requests.RequestException:
+                r = None
+            if r is not None and r.status_code == 200:
                 servers = r.json().get("data", [])
                 valid = [
                     s["id"]
@@ -110,6 +124,12 @@ class RobloxJoiner:
             f"+channel:"
             f"+LaunchExp:InApp"
         )
+
+        # mac เปิด Roblox ได้ทีละจอ ถ้ามีตัวเก่าค้างอยู่ สั่ง open ใหม่มันจะเงียบ ไม่เข้าเกม
+        # เลยฆ่าตัวเก่าทิ้งก่อนแล้วรอให้แอปปล่อยตัวก่อนค่อยเปิดใหม่ (relaunch = ตัวเก่าตายอยู่แล้ว ฆ่าได้)
+        subprocess.run(["pkill", "-i", "robloxplayer"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(2)
 
         subprocess.Popen(["open", uri])
         print(f"[OK] กำลังเปิด Roblox เข้า Place {PLACE_ID}...")
