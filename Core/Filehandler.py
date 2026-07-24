@@ -13,8 +13,12 @@ class Robloxtools:
             print("Authenication Error")
             return None
         if r.status_code == 200:
-            user = r.json()
-            return user['Name']
+            try:
+                user = r.json()          # บางที Roblox ตอบ 200 แต่ body ไม่ใช่ JSON (หน้า challenge/HTML)
+                return user['Name']
+            except (ValueError, KeyError):
+                print("Authenication Error")
+                return None
         else:
             print(f"Unexpected error occur")
             return None

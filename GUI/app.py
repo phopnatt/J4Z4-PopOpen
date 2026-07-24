@@ -7,6 +7,8 @@ from GUI.accounteditor import *
 from Core.accountmanagement import RobloxJoiner
 from GUI.Accountcontrol import accountcontrol
 from Core.accountcontrolmodule import *
+from GUI.Multiaccountlist import *
+from GUI.HighspecPannelGUI.mainhighspecstroke import *
 class maingui:
     def __init__(self):
         self.windows = ctk.CTk()
@@ -21,6 +23,13 @@ class maingui:
         accountcontrol(self.windows)
     def onclickadd(self):
         Cookiehandler(self.windows, on_added=self.accountlist.refresh_accounts)
+    def Onclickmultiadd(self):
+        Multicookiehandler(self.windows,on_added=self.accountlist.refresh_accounts)
+    def open_settings(self):
+        def on_save(data):
+            print("Saved:", data)
+        SettingsPopup(self.windows, on_save=on_save)
+    
     def onclickremove(self):
         name = self.accountlist.get_selected_name()
         if name is None:
@@ -51,9 +60,12 @@ class maingui:
     def RemoveAddhandlerbutton(self):
         removeadd = ctk.CTkFrame(self.windows)
         removeadd.pack(side="bottom", pady=10)
-        ctk.CTkButton(removeadd, text="Remove account",command=self.onclickremove).pack(side="left", padx=30)
-        ctk.CTkButton(removeadd, text="Add account",command=self.onclickadd).pack(side="left", padx=30)
+        ctk.CTkButton(removeadd, text="Remove Account",command=self.onclickremove).pack(side="left", padx=30)
+        ctk.CTkButton(removeadd, text="Add Single Account",command=self.onclickadd).pack(side="left", padx=30)
+        ctk.CTkButton(removeadd, text="Add Multi Account",command=self.Onclickmultiadd).pack(side="left", padx=30)
         ctk.CTkButton(removeadd, text="Account Control",command=self.accountcontrolbutton).pack(side="left", padx=30)
+        ctk.CTkButton(removeadd, text="High Spec Pannel",command=self.open_settings).pack(side="left", padx=30)
+
 
     def PlaceIDundJobIDHandler(self):
         btnfr = ctk.CTkFrame(self.windows)
